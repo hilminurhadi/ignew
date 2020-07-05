@@ -161,12 +161,11 @@ console.log(chalk`{bold.cyan
       `);
 inquirer.prompt(question)
 .then(answers => {
-  var text = answers.text.split('|');
   doMain({
     username:answers.username, 
     password:answers.password,
     urlpost:answers.urlpost
-}, answers.hastag, answers.sleep, text,answers.ittyw);
+}, answers.hastag, answers.sleep,answers.ittyw);
 })
 .catch(e => {
   console.log(e);
