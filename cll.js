@@ -46,6 +46,16 @@ const question = [
 },
 {
   type:'input',
+  name:'ittyw',
+  message:'Input Total of Target You Want (ITTYW):',
+  validate: function(value){
+    value = value.match(/[0-9]/);
+    if (value) return true;
+    return 'Use Number Only!';
+  }
+},
+{
+  type:'input',
   name:'sleep',
   message:'Insert Sleep (In MiliSeconds):',
   validate: function(value){
@@ -108,7 +118,7 @@ const doAction = async (session, params, text) => {
   return chalk`[Like: ${Like}] [Comment: ${Comment} ({cyan ${text}})]`;
 }
 
-const doMain = async (account, locationid, sleep, text) => {
+const doMain = async (account, locationid, sleep, text, ittyw) => {
   console.log(chalk`\n{green [?] Try to Login ....}`);
   account = await doLogin(account);
   console.log(chalk`{bold.green [✓] Login Success!}`)
@@ -117,19 +127,23 @@ const doMain = async (account, locationid, sleep, text) => {
   try {
     var cursor;
     var count = 0;
+    console.log(chalk`{yellow \n[#][>] START WITH RATIO ${ittyw} TARGET/${sleep} MiliSeconds [<][#]\n}`)
     do {
       if (cursor) feed.setCursor(cursor);
       count++;  
       const media = await feed.get();
-      console.log(chalk`\n[Cursor: {bold.cyan ${cursor ? cursor : 'null'}} | Count: {bold.cyan ${count}} | Total Media: {bold.cyan ${media.length}} | Delay: ${sleep} MiliSeconds ]\n`);
-      var timeNow = new Date();
-      timeNow = `${timeNow.getHours()}:${timeNow.getMinutes()}:${timeNow.getSeconds()}`
-      await Promise.all(media.map(async(media)=>{
-        const ranText = text[Math.floor(Math.random() * text.length)];
-        const resultAction = await doAction(account.session, media.params, ranText);
-        console.log(chalk`[{magenta ${timeNow}}] ${media.id} | {cyanBright @${media.params.account.username}}\n=> ${resultAction}`);
-      }))
-      await delay(sleep);
+      media = _.chunk(media, ittyw);
+      for (media of media) {
+        var timeNow = new Date();
+        timeNow = `${timeNow.getHours()}:${timeNow.getMinutes()}:${timeNow.getSeconds()}`
+        await Promise.all(media.map(async(media)=>{
+          const ranText = text[Math.floor(Math.random() * text.length)];
+          const resultAction = await doAction(account.session, media.params, ranText);
+          console.log(chalk`[{magenta ${timeNow}}] ${media.id} | {cyanBright @${media.params.account.username}}\n=> ${resultAction}`);
+        }))
+        console.log(chalk`{yellow \n[#][>] Delay For ${sleep} MiliSeconds [<][#]\n}`)
+        await delay(sleep);
+      }
       cursor = await feed.getCursor();
     } while(feed.isMoreAvailable());
   } catch(e) {
@@ -146,7 +160,7 @@ inquirer.prompt(question)
   var text = answers.text.split('|');
   doMain({
     username:answers.username, 
-    password:answers.password}, answers.locationId, answers.sleep, text);
+    password:answers.password}, answers.locationId, answers.sleep, text,answers.ittyw);
 })
 .catch(e => {
   console.log(e);
