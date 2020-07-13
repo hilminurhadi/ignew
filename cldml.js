@@ -142,7 +142,7 @@ const doMain = async (account, locationid, sleep, text, ittyw) => {
     do {
       if (cursor) feed.setCursor(cursor);
       count++;  
-      const media = await feed.get();
+      var media = await feed.get();
       media = _.chunk(media, ittyw);
       for (media of media) {
         var timeNow = new Date();
