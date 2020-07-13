@@ -109,7 +109,7 @@ await Client.Thread.configureText(session, users, text)
 const doAction = async (session, params, text) => {
   const task = [
   doLike(session, params.id),
-  doDM(session, accountId, text)
+  doDM(session, params.account.id, text)
   ];
   var [Like,DM] = await Promise.all(task);
   Like = Like ? chalk`{bold.green SUKSES}` : chalk`{bold.red GAGAL}`;
