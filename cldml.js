@@ -109,7 +109,7 @@ await Client.Thread.configureText(session, users, text)
 const doAction = async (session, params, text) => {
   const task = [
   doLike(session, params.id),
-  doDM(session, accountId, text),
+  doDM(session, params.account.id, text),
   doComment(session, params.id, text)
   ];
   var [DM,Like,Comment] = await Promise.all(task);
