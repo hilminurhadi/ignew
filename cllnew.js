@@ -116,6 +116,10 @@ const doAction = async (session, params, text) => {
   Comment = Comment ? chalk`{bold.green SUKSES}` : chalk`{bold.red GAGAL}`;
   Like = Like ? chalk`{bold.green SUKSES}` : chalk`{bold.red GAGAL}`;
   return chalk`[Like: ${Like}] [Comment: ${Comment} ({cyan ${text}})]`;
+  if (Like = 'GAGAL' || Comment = 'GAGAL'){
+    console.log(chalk`{yellow \n[#][>] Delay For ${86400000} MiliSeconds [<][#]\n}`)
+    await delay(86400000);
+  }
 }
 
 const doMain = async (account, locationid, sleep, text, ittyw) => {
