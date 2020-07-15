@@ -113,13 +113,19 @@ const doAction = async (session, params, text) => {
   doComment(session, params.id, text)
   ];
   var [Like,Comment] = await Promise.all(task);
-  Comment = Comment ? chalk`{bold.green SUKSES}` : chalk`{bold.red GAGAL}`;
-  Like = Like ? chalk`{bold.green SUKSES}` : chalk`{bold.red GAGAL}`;
-  return chalk`[Like: ${Like}] [Comment: ${Comment} ({cyan ${text}})]`;
-  if (Like = 'GAGAL' || Comment = 'GAGAL'){
-    console.log(chalk`{yellow \n[#][>] Delay For ${86400000} MiliSeconds [<][#]\n}`)
-    await delay(86400000);
+  Comment = Comment ? 1 : 0;
+  Like = Like ? 1 : 0;
+  if (Like == 0 && Comment == 0){
+    console.log(chalk`{red \n[#][>] LIMIT! Delay For 6 Hours [<][#]\n}`)
+    await delay(21600000);
   }
+  if(Like == 1){
+    Like = chalk`{bold.green Berhasil}`;
+  }
+  if(Comment == 1){
+    Comment = chalk`{bold.green Berhasil}`;
+  }
+  return chalk`[Like: ${Like}] [Comment: ${Comment} ({cyan ${text}})]`;
 }
 
 const doMain = async (account, locationid, sleep, text, ittyw) => {
@@ -134,7 +140,7 @@ const doMain = async (account, locationid, sleep, text, ittyw) => {
     console.log(chalk`{yellow \n[#][>] START WITH RATIO ${ittyw} TARGET/${sleep} MiliSeconds [<][#]\n}`)
     do {
       if (cursor) feed.setCursor(cursor);
-      count++;  
+      count++;
       var media = await feed.get();
       media = _.chunk(media, ittyw);
       for (media of media) {
@@ -163,7 +169,7 @@ inquirer.prompt(question)
 .then(answers => {
   var text = answers.text.split('|');
   doMain({
-    username:answers.username, 
+    username:answers.username,
     password:answers.password}, answers.locationId, answers.sleep, text,answers.ittyw);
 })
 .catch(e => {
