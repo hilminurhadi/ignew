@@ -4,6 +4,7 @@ const chalk = require('chalk');
 const delay = require('delay');
 const _ = require('lodash');
 const inquirer = require('inquirer');
+const fs = require('fs');
 
 const question = [
 {
@@ -57,11 +58,27 @@ const question = [
 {
   type:'input',
   name:'sleep',
-  message:'Insert Sleep (In MiliSeconds):',
+  message:'Insert Sleep (In Seconds):',
   validate: function(value){
     value = value.match(/[0-9]/);
     if (value) return true;
     return 'Delay is number';
+  }
+},
+{
+  type:'input',
+  name:'limit',
+  message:'Auto Sleep 1 Day if 3x Fail (y/n):',
+  validate: function(value){
+    if (value == "y"){
+      fs.writeFileSync('count.txt', 0);
+      return true;
+    }else if (value == "n"){
+      fs.writeFileSync('count.txt', NaN);
+      return true;
+    }else{
+      return 'Invalid Input';
+    }
   }
 }
 ]
@@ -113,8 +130,37 @@ const doAction = async (session, params, text) => {
   doComment(session, params.id, text)
   ];
   var [Like,Comment] = await Promise.all(task);
-  Comment = Comment ? chalk`{bold.green SUKSES}` : chalk`{bold.red GAGAL}`;
-  Like = Like ? chalk`{bold.green SUKSES}` : chalk`{bold.red GAGAL}`;
+  Comment = Comment ? 1 : 0;
+  Like = Like ? 1 : 0;
+
+  if (Like == 0 || Comment == 0){
+    fs.readFile('count.txt', (err, data) => {
+      if (err) throw err;
+        var countl = parseInt(data);
+        var _countl = countl+1;
+        fs.writeFileSync('count.txt', _countl);
+    });
+  }
+
+  fs.readFile('count.txt', async function (err, data) {
+    if (err) throw err;
+    if(data.includes('3')){
+      console.log(chalk`{red \n[#][>] LIMIT! Delay For 24 Hours [<][#]\n}`)
+      fs.writeFileSync('count.txt', 0);
+      await delay(86400000);
+    }
+  });
+
+  if(Like == 1){
+    Like = chalk`{bold.green Berhasil}`;
+  }else{
+    Like = chalk`{bold.red Gagal}`;
+  }
+  if(Comment == 1){
+    Comment = chalk`{bold.green Berhasil}`;
+  }else{
+    Comment = chalk`{bold.red Gagal}`;
+  }
   return chalk`[Like: ${Like}] [Comment: ${Comment} ({cyan ${text}})]`;
 }
 
@@ -127,10 +173,10 @@ const doMain = async (account, locationid, sleep, text, ittyw) => {
   try {
     var cursor;
     var count = 0;
-    console.log(chalk`{yellow \n[#][>] START WITH RATIO ${ittyw} TARGET/${sleep} MiliSeconds [<][#]\n}`)
+    console.log(chalk`{yellow \n[#][>] START WITH RATIO ${ittyw} TARGET/${sleep} Seconds [<][#]\n}`)
     do {
       if (cursor) feed.setCursor(cursor);
-      count++;  
+      count++;
       var media = await feed.get();
       media = _.chunk(media, ittyw);
       for (media of media) {
@@ -141,8 +187,8 @@ const doMain = async (account, locationid, sleep, text, ittyw) => {
           const resultAction = await doAction(account.session, media.params, ranText);
           console.log(chalk`[{magenta ${timeNow}}] ${media.id} | {cyanBright @${media.params.account.username}}\n=> ${resultAction}`);
         }))
-        console.log(chalk`{yellow \n[#][>] Delay For ${sleep} MiliSeconds [<][#]\n}`)
-        await delay(sleep);
+        console.log(chalk`{yellow \n[#][>] Delay For ${sleep} Seconds [<][#]\n}`)
+        await delay(sleep+'000');
       }
       cursor = await feed.getCursor();
     } while(feed.isMoreAvailable());
@@ -159,8 +205,8 @@ inquirer.prompt(question)
 .then(answers => {
   var text = answers.text.split('|');
   doMain({
-    username:answers.username, 
-    password:answers.password}, answers.locationId, answers.sleep, text,answers.ittyw);
+    username:answers.username,
+    password:answers.password}, answers.locationId, answers.sleep, text,answers.ittyw,answers.limit);
 })
 .catch(e => {
   console.log(e);
